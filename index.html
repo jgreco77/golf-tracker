@@ -148,8 +148,10 @@
       display: flex;
       flex-direction: column;
       gap: 0.75rem;
+      -webkit-overflow-scrolling: touch;
     }
 
+    /* Clickable Score Card */
     .score-card {
       background: var(--irish-white);
       border: 1px solid #e2e8f0;
@@ -159,6 +161,12 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+
+    .score-card:active {
+      transform: scale(0.98);
     }
 
     .card-info h3 {
@@ -187,7 +195,7 @@
       text-align: right;
     }
 
-    /* In-App Upload Modal */
+    /* Modals (Upload & Detail View) */
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -204,7 +212,9 @@
       border-radius: 16px;
       border: 3px solid var(--irish-orange);
       width: 100%;
-      max-width: 480px;
+      max-width: 500px;
+      max-height: 88vh;
+      overflow-y: auto;
       padding: 1.5rem;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
     }
@@ -212,7 +222,53 @@
     .modal-box h2 {
       font-size: 1.25rem;
       color: var(--irish-green-dark);
+      margin-bottom: 0.25rem;
+    }
+
+    .modal-sub {
+      font-size: 0.85rem;
+      color: var(--text-muted);
       margin-bottom: 1rem;
+    }
+
+    /* Hole-by-Hole Grid */
+    .grid-wrap {
+      overflow-x: auto;
+      margin: 1rem 0;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+    }
+
+    .score-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+
+    .score-table th, .score-table td {
+      padding: 0.5rem 0.4rem;
+      border-bottom: 1px solid #e2e8f0;
+      border-right: 1px solid #e2e8f0;
+    }
+
+    .score-table th {
+      background: #e2e8f0;
+      color: var(--irish-green-dark);
+      font-weight: 700;
+    }
+
+    .score-table tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    .card-photo-preview {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      margin-top: 0.75rem;
+      max-height: 200px;
+      object-fit: cover;
     }
 
     .form-group {
@@ -234,12 +290,6 @@
       border: 1px solid #cbd5e1;
       border-radius: 8px;
       font-size: 0.9rem;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 1.25rem;
     }
 
     .btn-submit {
@@ -282,7 +332,7 @@
     <div class="summary-bar">
       <div>
         <div class="stat-label">Rounds</div>
-        <div class="stat-value" id="stat-rounds">--</div>
+        <div class="stat-value" id="stat-rounds">0</div>
       </div>
       <div>
         <div class="stat-label">Scoring Avg</div>
@@ -294,19 +344,46 @@
       </div>
     </div>
 
+    <!-- Scrollable Scorecards -->
     <div class="scroll-container" id="rounds-list">
-      <div class="score-card">
-        <div class="card-info">
-          <h3>Harbor Lights Golf Club</h3>
-          <div class="card-meta">Sep 12, 2026 • 9 Holes</div>
-        </div>
-        <div>
-          <div class="total-score">41</div>
-          <div class="to-par">+5</div>
-        </div>
-      </div>
+      <!-- Injected via JavaScript -->
     </div>
   </main>
+
+  <!-- Detail Modal (Opens when you tap a card) -->
+  <div class="modal-backdrop" id="detail-modal">
+    <div class="modal-box">
+      <h2 id="detail-course">Course Name</h2>
+      <p class="modal-sub" id="detail-meta">Date • Location</p>
+
+      <div style="display: flex; justify-content: space-around; background: #e2e8f0; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem;">
+        <div><strong>Score:</strong> <span id="detail-score">--</span></div>
+        <div><strong>To Par:</strong> <span id="detail-to-par">--</span></div>
+        <div><strong>Putts:</strong> <span id="detail-putts">--</span></div>
+      </div>
+
+      <div class="grid-wrap">
+        <table class="score-table">
+          <thead>
+            <tr id="table-holes"><th>Hole</th></tr>
+          </thead>
+          <tbody>
+            <tr id="table-pars"><td><strong>Par</strong></td></tr>
+            <tr id="table-scores"><td><strong>Score</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="detail-photo-wrap" style="display:none;">
+        <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Scorecard Scan</label>
+        <img id="detail-photo" class="card-photo-preview" src="" alt="Scorecard" />
+      </div>
+
+      <div style="margin-top: 1.25rem;">
+        <button class="btn-cancel" style="width: 100%;" onclick="closeDetailModal()">Close</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Upload Modal -->
   <div class="modal-backdrop" id="upload-modal">
@@ -323,12 +400,12 @@
         <input type="text" id="course-override" placeholder="Leave blank to auto-detect" />
       </div>
 
-      <div class="form-group" id="token-group">
+      <div class="form-group">
         <label>GitHub Personal Access Token (Saved locally)</label>
         <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx" />
       </div>
 
-      <div class="modal-actions">
+      <div style="display: flex; gap: 0.5rem; margin-top: 1.25rem;">
         <button class="btn-cancel" onclick="closeUploadModal()">Cancel</button>
         <button class="btn-submit" id="btn-upload" onclick="uploadScorecard()">Upload & Process</button>
       </div>
@@ -339,18 +416,61 @@
   <script>
     const REPO_OWNER = 'jgreco77';
     const REPO_NAME = 'golf-tracker';
+    let loadedRounds = [];
 
     function openUploadModal() {
       const savedToken = localStorage.getItem('gh_pat');
-      if (savedToken) {
-        document.getElementById('gh-token').value = savedToken;
-      }
+      if (savedToken) document.getElementById('gh-token').value = savedToken;
       document.getElementById('upload-modal').style.display = 'flex';
     }
 
     function closeUploadModal() {
       document.getElementById('upload-modal').style.display = 'none';
       document.getElementById('upload-status').textContent = '';
+    }
+
+    function openDetailModal(index) {
+      const round = loadedRounds[index];
+      if (!round) return;
+
+      document.getElementById('detail-course').textContent = round.course_name || 'Golf Course';
+      document.getElementById('detail-meta').textContent = `${round.date} • ${round.location || 'Local Course'}`;
+      document.getElementById('detail-score').textContent = round.score;
+      document.getElementById('detail-to-par').textContent = round.to_par >= 0 ? '+' + round.to_par : round.to_par;
+      document.getElementById('detail-putts').textContent = round.total_putts || 'N/A';
+
+      // Populate Hole Table
+      const trHoles = document.getElementById('table-holes');
+      const trPars = document.getElementById('table-pars');
+      const trScores = document.getElementById('table-scores');
+
+      trHoles.innerHTML = '<th>Hole</th>';
+      trPars.innerHTML = '<td><strong>Par</strong></td>';
+      trScores.innerHTML = '<td><strong>Score</strong></td>';
+
+      if (round.holes && round.holes.length > 0) {
+        round.holes.forEach((h, i) => {
+          trHoles.innerHTML += `<th>${i + 1}</th>`;
+          trPars.innerHTML += `<td>${h.par || '-'}</td>`;
+          trScores.innerHTML += `<td>${h.score || '-'}</td>`;
+        });
+      }
+
+      // Show scorecard photo if available
+      const photoWrap = document.getElementById('detail-photo-wrap');
+      const photoImg = document.getElementById('detail-photo');
+      if (round.image_url) {
+        photoImg.src = round.image_url;
+        photoWrap.style.display = 'block';
+      } else {
+        photoWrap.style.display = 'none';
+      }
+
+      document.getElementById('detail-modal').style.display = 'flex';
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detail-modal').style.display = 'none';
     }
 
     async function uploadScorecard() {
@@ -384,7 +504,6 @@
           const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
           const filePath = `images/scorecard-${timestamp}.jpg`;
 
-          // 1. Commit the raw image to images/
           const uploadRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${filePath}`, {
             method: 'PUT',
             headers: {
@@ -397,14 +516,11 @@
             })
           });
 
-          if (!uploadRes.ok) {
-            throw new Error(`Upload failed (${uploadRes.status}): ${await uploadRes.text()}`);
-          }
+          if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.statusText}`);
 
           status.textContent = 'Triggering parser workflow...';
 
-          // 2. Trigger the processing workflow directly via repository dispatch
-          const dispatchRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/dispatches`, {
+          await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/dispatches`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${tokenInput}`,
@@ -420,11 +536,11 @@
           });
 
           status.style.color = '#ff7700';
-          status.textContent = 'Scorecard uploaded! Processing started in GitHub Actions.';
+          status.textContent = 'Scorecard uploaded! Processing started.';
           setTimeout(() => {
             closeUploadModal();
             submitBtn.disabled = false;
-          }, 2500);
+          }, 2000);
 
         } catch (err) {
           status.style.color = '#dc2626';
@@ -440,16 +556,20 @@
         const res = await fetch('./data/player_stats.json');
         if (!res.ok) return;
         const data = await res.json();
+        
         document.getElementById('stat-rounds').textContent = data.total_rounds || '0';
         document.getElementById('stat-avg').textContent = data.scoring_average || '--';
         document.getElementById('stat-low').textContent = data.lowest_round || '--';
 
+        const list = document.getElementById('rounds-list');
+        list.innerHTML = '';
+
         if (data.rounds && data.rounds.length > 0) {
-          const list = document.getElementById('rounds-list');
-          list.innerHTML = '';
-          data.rounds.forEach(r => {
+          loadedRounds = data.rounds;
+          data.rounds.forEach((r, idx) => {
             const card = document.createElement('div');
             card.className = 'score-card';
+            card.onclick = () => openDetailModal(idx);
             card.innerHTML = `
               <div class="card-info">
                 <h3>${r.course_name}</h3>
@@ -462,8 +582,17 @@
             `;
             list.appendChild(card);
           });
+        } else {
+          list.innerHTML = `
+            <div style="text-align: center; color: var(--text-muted); padding: 2rem 1rem;">
+              <p style="font-weight: 700; font-size: 1.1rem; color: var(--irish-green);">No rounds logged yet!</p>
+              <p style="font-size: 0.85rem; margin-top: 0.4rem;">Tap the <strong>+ Add Score</strong> button to snap your first scorecard.</p>
+            </div>
+          `;
         }
-      } catch (err) {}
+      } catch (err) {
+        console.log('Error reading scores:', err);
+      }
     }
 
     loadScores();
