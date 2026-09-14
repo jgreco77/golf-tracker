@@ -21,7 +21,7 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient());
 
         // Replace with your live GitHub Pages link:
-        webView.loadUrl("https://YOUR-USERNAME.github.io/YOUR-REPO/");
+        webView.loadUrl("https://jgreco77.github.io/golf-tracker/");
 
         setContentView(webView);
     }
