@@ -1,6 +1,55 @@
 {
-  "total_rounds": 0,
-  "scoring_average": "--",
-  "lowest_round": "--",
-  "rounds": []
+  "total_rounds": 1,
+  "scoring_average": "39.0",
+  "lowest_round": "39",
+  "rounds": [
+    {
+      "course_name": "Harbor Lights Golf Club",
+      "location": "Warwick, RI",
+      "date": "Sep 14, 2026",
+      "holes_played": 9,
+      "score": 39,
+      "to_par": 3,
+      "total_putts": 16,
+      "image_url": "",
+      "holes": [
+        {
+          "par": 4,
+          "score": 5
+        },
+        {
+          "par": 3,
+          "score": 3
+        },
+        {
+          "par": 4,
+          "score": 4
+        },
+        {
+          "par": 4,
+          "score": 4
+        },
+        {
+          "par": 5,
+          "score": 5
+        },
+        {
+          "par": 3,
+          "score": 4
+        },
+        {
+          "par": 4,
+          "score": 5
+        },
+        {
+          "par": 4,
+          "score": 4
+        },
+        {
+          "par": 5,
+          "score": 5
+        }
+      ]
+    }
+  ]
 }
