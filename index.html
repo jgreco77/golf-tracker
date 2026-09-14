@@ -17,6 +17,8 @@
       --irish-white: #ffffff;
       --off-white: #f8fafc;
       --text-muted: #64748b;
+      --danger-red: #dc2626;
+      --danger-red-hover: #b91c1c;
     }
 
     * {
@@ -313,6 +315,7 @@
       font-size: 0.9rem;
     }
 
+    /* Modal Action Buttons */
     .btn-submit {
       flex: 1;
       background: var(--irish-green);
@@ -322,6 +325,36 @@
       border-radius: 8px;
       font-weight: 700;
       cursor: pointer;
+    }
+
+    .btn-share {
+      flex: 1;
+      background: var(--irish-orange);
+      color: white;
+      border: none;
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+    }
+
+    .btn-delete {
+      background: #fee2e2;
+      color: var(--danger-red);
+      border: 1px solid #fca5a5;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-delete:active {
+      background: var(--danger-red);
+      color: white;
     }
 
     .btn-cancel {
@@ -369,11 +402,11 @@
     </div>
 
     <div class="scroll-container" id="rounds-list">
-      <!-- Rounds inject dynamically -->
+      <!-- Rounds injected dynamically -->
     </div>
   </main>
 
-  <!-- Detail Modal -->
+  <!-- Detail Modal with Share & Delete Controls -->
   <div class="modal-backdrop" id="detail-modal">
     <div class="modal-box">
       <h2 id="detail-course">Course Name</h2>
@@ -402,9 +435,15 @@
         <img id="detail-photo" class="card-photo-preview" src="" alt="Scorecard" />
       </div>
 
-      <div style="margin-top: 1.25rem;">
-        <button class="btn-cancel" style="width: 100%;" onclick="closeDetailModal()">Close</button>
+      <!-- Action buttons -->
+      <div style="display: flex; gap: 0.5rem; margin-top: 1.25rem;">
+        <button class="btn-share" onclick="shareCurrentRound()">
+          <span>&#x27A4;</span> Share Score
+        </button>
+        <button class="btn-delete" id="btn-delete-card" onclick="deleteCurrentRound()">Delete</button>
+        <button class="btn-cancel" onclick="closeDetailModal()">Close</button>
       </div>
+      <p id="delete-status" style="margin-top: 0.6rem; font-size: 0.8rem; font-weight: 600; text-align: center;"></p>
     </div>
   </div>
 
@@ -440,6 +479,8 @@
     const REPO_OWNER = 'jgreco77';
     const REPO_NAME = 'golf-tracker';
     let loadedRounds = [];
+    let activeRoundIndex = null;
+    let statsFileSha = null;
 
     function openUploadModal() {
       const savedToken = localStorage.getItem('gh_pat');
@@ -453,9 +494,11 @@
     }
 
     function openDetailModal(index) {
+      activeRoundIndex = index;
       const round = loadedRounds[index];
       if (!round) return;
 
+      document.getElementById('delete-status').textContent = '';
       document.getElementById('detail-course').textContent = round.course_name || 'Golf Course';
       document.getElementById('detail-meta').textContent = `${round.date} • ${round.location || 'Local Course'}`;
       document.getElementById('detail-score').textContent = round.score;
@@ -492,9 +535,113 @@
 
     function closeDetailModal() {
       document.getElementById('detail-modal').style.display = 'none';
+      activeRoundIndex = null;
     }
 
-    // Compresses large phone camera files down to ~1MB
+    // Share Scorecard Summary
+    async function shareCurrentRound() {
+      if (activeRoundIndex === null) return;
+      const round = loadedRounds[activeRoundIndex];
+      const toParText = round.to_par >= 0 ? '+' + round.to_par : round.to_par;
+      const shareText = `Shot a ${round.score} (${toParText}) at ${round.course_name} on ${round.date}! Verified on Golf Tracker.`;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: `Golf Score: ${round.course_name}`,
+            text: shareText,
+            url: round.image_url || window.location.href
+          });
+        } catch (err) {
+          console.log('Share canceled or error:', err);
+        }
+      } else {
+        // Clipboard fallback if native share is not supported
+        navigator.clipboard.writeText(`${shareText}\n${round.image_url || window.location.href}`);
+        alert('Scorecard summary copied to clipboard!');
+      }
+    }
+
+    // Delete Scorecard and push updated stats to GitHub
+    async function deleteCurrentRound() {
+      if (activeRoundIndex === null) return;
+      const round = loadedRounds[activeRoundIndex];
+      const confirmDelete = confirm(`Are you sure you want to delete this round at ${round.course_name}?`);
+      if (!confirmDelete) return;
+
+      const token = localStorage.getItem('gh_pat');
+      if (!token) {
+        alert('Please enter your GitHub token in the + Add Score screen first.');
+        return;
+      }
+
+      const delStatus = document.getElementById('delete-status');
+      const delBtn = document.getElementById('btn-delete-card');
+      delStatus.style.color = '#1b4332';
+      delStatus.textContent = 'Deleting round from GitHub...';
+      delBtn.disabled = true;
+
+      try {
+        // 1. Remove the selected round locally
+        const updatedRounds = loadedRounds.filter((_, idx) => idx !== activeRoundIndex);
+        const allScores = updatedRounds.map(r => r.score);
+
+        const newStats = {
+          total_rounds: updatedRounds.length,
+          scoring_average: allScores.length > 0 ? (allScores.reduce((a, b) => a + b, 0) / allScores.length).toFixed(1) : '--',
+          lowest_round: allScores.length > 0 ? String(Math.min(...allScores)) : '--',
+          rounds: updatedRounds
+        };
+
+        // 2. Fetch current file SHA if not cached
+        if (!statsFileSha) {
+          const checkRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/data/player_stats.json`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const checkData = await checkRes.json();
+          statsFileSha = checkData.sha;
+        }
+
+        // 3. Commit updated JSON directly to GitHub
+        const updatedContentBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(newStats, null, 2))));
+        const commitRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/data/player_stats.json`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `Delete round: ${round.course_name} (${round.date})`,
+            content: updatedContentBase64,
+            sha: statsFileSha
+          })
+        });
+
+        if (!commitRes.ok) {
+          const errBody = await commitRes.json();
+          throw new Error(errBody.message || 'Failed to update remote data');
+        }
+
+        const commitData = await commitRes.json();
+        statsFileSha = commitData.content.sha;
+
+        delStatus.style.color = '#ff7700';
+        delStatus.textContent = 'Round deleted!';
+
+        setTimeout(() => {
+          closeDetailModal();
+          delBtn.disabled = false;
+          loadScores();
+        }, 1200);
+
+      } catch (err) {
+        delStatus.style.color = '#dc2626';
+        delStatus.textContent = `Error: ${err.message}`;
+        delBtn.disabled = false;
+      }
+    }
+
+    // Compresses large camera photos before API commit
     function compressImage(file, maxWidth = 1600, quality = 0.75) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -516,145 +663,4 @@
           };
           img.onerror = reject;
           img.src = e.target.result;
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
-
-    async function uploadScorecard() {
-      const fileInput = document.getElementById('scorecard-file');
-      const tokenInput = document.getElementById('gh-token').value.trim();
-      const courseOverride = document.getElementById('course-override').value.trim();
-      const status = document.getElementById('upload-status');
-      const submitBtn = document.getElementById('btn-upload');
-
-      if (!fileInput.files || fileInput.files.length === 0) {
-        alert('Please choose or snap a scorecard photo.');
-        return;
-      }
-      if (!tokenInput) {
-        alert('Please enter your GitHub Personal Access Token.');
-        return;
-      }
-
-      localStorage.setItem('gh_pat', tokenInput);
-
-      status.style.color = '#1b4332';
-      status.textContent = 'Compressing image for upload...';
-      submitBtn.disabled = true;
-
-      try {
-        const compressedDataUrl = await compressImage(fileInput.files[0]);
-        const base64Content = compressedDataUrl.split(',')[1];
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const filePath = `images/scorecard-${timestamp}.jpg`;
-
-        status.textContent = 'Uploading to GitHub...';
-
-        const uploadRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${filePath}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${tokenInput}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            message: `Upload scorecard ${timestamp}`,
-            content: base64Content
-          })
-        });
-
-        if (!uploadRes.ok) {
-          const errData = await uploadRes.json().catch(() => ({}));
-          throw new Error(`Upload failed (${uploadRes.status}): ${errData.message || uploadRes.statusText}`);
-        }
-
-        status.textContent = 'Triggering parser workflow...';
-
-        await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/dispatches`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${tokenInput}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            event_type: 'process-scorecard',
-            client_payload: {
-              image_path: filePath,
-              course_override: courseOverride
-            }
-          })
-        });
-
-        status.style.color = '#ff7700';
-        status.textContent = 'Uploaded! GitHub is processing your card.';
-        setTimeout(() => {
-          closeUploadModal();
-          submitBtn.disabled = false;
-        }, 2000);
-
-      } catch (err) {
-        status.style.color = '#dc2626';
-        status.textContent = err.message;
-        submitBtn.disabled = false;
-      }
-    }
-
-    // Force pulls un-cached player stats
-    async function loadScores() {
-      try {
-        const cacheBuster = new Date().getTime();
-        const res = await fetch(`./data/player_stats.json?t=${cacheBuster}`, {
-          cache: 'no-store',
-          headers: {
-            'Pragma': 'no-cache',
-            'Cache-Control': 'no-cache'
-          }
-        });
-
-        if (!res.ok) return;
-        const data = await res.json();
-
-        document.getElementById('stat-rounds').textContent = data.total_rounds || '0';
-        document.getElementById('stat-avg').textContent = data.scoring_average || '--';
-        document.getElementById('stat-low').textContent = data.lowest_round || '--';
-
-        const list = document.getElementById('rounds-list');
-        list.innerHTML = '';
-
-        if (data.rounds && data.rounds.length > 0) {
-          loadedRounds = data.rounds;
-          data.rounds.forEach((r, idx) => {
-            const card = document.createElement('div');
-            card.className = 'score-card';
-            card.onclick = () => openDetailModal(idx);
-            card.innerHTML = `
-              <div class="card-info">
-                <h3>${r.course_name}</h3>
-                <div class="card-meta">${r.date} • ${r.holes_played} Holes</div>
-              </div>
-              <div>
-                <div class="total-score">${r.score}</div>
-                <div class="to-par">${r.to_par >= 0 ? '+' + r.to_par : r.to_par}</div>
-              </div>
-            `;
-            list.appendChild(card);
-          });
-        } else {
-          list.innerHTML = `
-            <div style="text-align: center; color: var(--text-muted); padding: 2.5rem 1rem;">
-              <p style="font-weight: 700; font-size: 1.1rem; color: var(--irish-green);">No rounds logged yet!</p>
-              <p style="font-size: 0.85rem; margin-top: 0.4rem;">Tap <strong>+ Add Score</strong> above to snap your scorecard.</p>
-            </div>
-          `;
-        }
-      } catch (err) {
-        console.log('Error reading scores:', err);
-      }
-    }
-
-    // Initial load
-    loadScores();
-  </script>
-</body>
-</html>
+  
