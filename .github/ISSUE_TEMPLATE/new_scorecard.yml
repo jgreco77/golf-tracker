@@ -1,0 +1,23 @@
+name: New Scorecard
+description: Upload a golf scorecard photo for automatic processing
+title: "Round: Auto-Process"
+labels: ["scorecard"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Scorecard Upload
+        Attach your scorecard photo below. The workflow will extract location, match your name, and compile your stats.
+  - type: textarea
+    id: scorecard_image
+    attributes:
+      label: Scorecard Photo
+      description: Drag and drop or attach your scorecard photo here.
+    validations:
+      required: true
+  - type: input
+    id: player_name_override
+    attributes:
+      label: Player Name Override (Optional)
+      description: Leave blank unless you wrote an unusual nickname on the card.
+      
