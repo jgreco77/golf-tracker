@@ -4,9 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Scorecard Vault</title>
-  <!-- Golf Ball SVG Favicon -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%23ffffff' stroke='%231b4332' stroke-width='6'/><circle cx='40' cy='35' r='3.5' fill='%23cbd5e1'/><circle cx='60' cy='35' r='3.5' fill='%23cbd5e1'/><circle cx='50' cy='48' r='3.5' fill='%23cbd5e1'/><circle cx='35' cy='55' r='3.5' fill='%23cbd5e1'/><circle cx='65' cy='55' r='3.5' fill='%23cbd5e1'/><circle cx='50' cy='65' r='3.5' fill='%23cbd5e1'/></svg>" />
-
   <style>
     :root {
       --irish-green-dark: #0f281e;
@@ -16,7 +13,6 @@
       --irish-orange-hover: #e06600;
       --irish-white: #ffffff;
       --off-white: #f8fafc;
-      --surface-border: #d8f3dc;
       --text-muted: #64748b;
     }
 
@@ -30,7 +26,6 @@
     body {
       min-height: 100vh;
       background-color: var(--irish-green);
-      /* Subtle Crossed Golf Clubs Watermark */
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800' opacity='0.08'%3E%3Cg stroke='%23ffffff' stroke-width='16' stroke-linecap='round' stroke-linejoin='round' fill='none'%3E%3Cline x1='150' y1='150' x2='650' y2='650'/%3E%3Cpath d='M650 650 L685 640 L705 670 L660 685 Z' fill='%23ffffff'/%3E%3Cline x1='650' y1='150' x2='150' y2='650'/%3E%3Cpath d='M150 650 L115 640 L95 670 L140 685 Z' fill='%23ffffff'/%3E%3C/g%3E%3C/svg%3E");
       background-position: center;
       background-repeat: no-repeat;
@@ -38,19 +33,17 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 1.5rem 1rem;
+      padding: 1.25rem 1rem;
       color: #1e293b;
     }
 
-    /* Top Bar */
     header {
       width: 100%;
       max-width: 650px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1.25rem;
-      padding: 0.5rem 0;
+      margin-bottom: 1rem;
     }
 
     .brand {
@@ -83,47 +76,35 @@
     }
 
     .brand-titles h1 {
-      font-size: 1.4rem;
+      font-size: 1.35rem;
       font-weight: 800;
-      letter-spacing: 0.5px;
       color: var(--irish-white);
     }
 
     .brand-titles p {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--irish-orange);
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
 
-    /* Add Score Trigger Button */
     .btn-add-score {
       background-color: var(--irish-orange);
       color: var(--irish-white);
-      text-decoration: none;
+      border: 2px solid rgba(255, 255, 255, 0.4);
       font-weight: 700;
       font-size: 0.9rem;
-      padding: 0.65rem 1.15rem;
+      padding: 0.6rem 1.1rem;
       border-radius: 9999px;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
+      cursor: pointer;
       box-shadow: 0 4px 12px rgba(255, 119, 0, 0.4);
-      transition: background 0.15s ease, transform 0.1s ease;
-      border: 2px solid rgba(255, 255, 255, 0.4);
     }
 
-    .btn-add-score:hover {
-      background-color: var(--irish-orange-hover);
-      transform: translateY(-1px);
-    }
-
-    /* Center Scrollable Frame */
     .main-screen {
       width: 100%;
       max-width: 650px;
-      height: 72vh;
+      height: 74vh;
       background: var(--off-white);
       border-radius: 20px;
       border: 4px solid var(--irish-orange);
@@ -133,7 +114,6 @@
       overflow: hidden;
     }
 
-    /* Quick Personal Stats Ribbon */
     .summary-bar {
       background: var(--irish-green-dark);
       padding: 1rem 1.25rem;
@@ -148,7 +128,6 @@
       color: #94a3b8;
       text-transform: uppercase;
       font-weight: 700;
-      letter-spacing: 0.5px;
     }
 
     .stat-value {
@@ -162,7 +141,6 @@
       color: var(--irish-orange);
     }
 
-    /* Scrollable Score Card List */
     .scroll-container {
       flex: 1;
       overflow-y: auto;
@@ -170,10 +148,8 @@
       display: flex;
       flex-direction: column;
       gap: 0.75rem;
-      -webkit-overflow-scrolling: touch;
     }
 
-    /* Single Score Card */
     .score-card {
       background: var(--irish-white);
       border: 1px solid #e2e8f0;
@@ -183,7 +159,6 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
     }
 
     .card-info h3 {
@@ -196,33 +171,101 @@
       font-size: 0.8rem;
       color: var(--text-muted);
       margin-top: 0.25rem;
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-
-    .card-scores {
-      text-align: right;
     }
 
     .total-score {
       font-size: 1.6rem;
       font-weight: 900;
       color: var(--irish-green-dark);
-      line-height: 1;
+      text-align: right;
     }
 
     .to-par {
       font-size: 0.8rem;
       font-weight: 700;
       color: var(--irish-orange);
-      margin-top: 0.2rem;
+      text-align: right;
+    }
+
+    /* In-App Upload Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 40, 30, 0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-box {
+      background: var(--off-white);
+      border-radius: 16px;
+      border: 3px solid var(--irish-orange);
+      width: 100%;
+      max-width: 480px;
+      padding: 1.5rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-box h2 {
+      font-size: 1.25rem;
+      color: var(--irish-green-dark);
+      margin-bottom: 1rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 0.65rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1.25rem;
+    }
+
+    .btn-submit {
+      flex: 1;
+      background: var(--irish-green);
+      color: white;
+      border: none;
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-cancel {
+      background: #e2e8f0;
+      color: #475569;
+      border: none;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Controls -->
   <header>
     <div class="brand">
       <div class="golfball-icon"></div>
@@ -232,16 +275,10 @@
       </div>
     </div>
     
-    <!-- Points directly to your GitHub repo issue creation -->
-    <a href="https://github.com/jgreco77/golf-tracker/issues/new?template=new_scorecard.yml" class="btn-add-score" target="_blank" rel="noopener">
-      <span>+</span> Add Score
-    </a>
+    <button class="btn-add-score" onclick="openUploadModal()">+ Add Score</button>
   </header>
 
-  <!-- Central Scrollable Score Screen -->
   <main class="main-screen">
-    
-    <!-- Top Summary Ribbon -->
     <div class="summary-bar">
       <div>
         <div class="stat-label">Rounds</div>
@@ -257,56 +294,156 @@
       </div>
     </div>
 
-    <!-- Scrollable Cards Body -->
     <div class="scroll-container" id="rounds-list">
-      <!-- Example Fallback / Placeholder Cards -->
       <div class="score-card">
         <div class="card-info">
           <h3>Harbor Lights Golf Club</h3>
-          <div class="card-meta">
-            <span>Sep 12, 2026</span>
-            <span>•</span>
-            <span>9 Holes</span>
-          </div>
+          <div class="card-meta">Sep 12, 2026 • 9 Holes</div>
         </div>
-        <div class="card-scores">
+        <div>
           <div class="total-score">41</div>
           <div class="to-par">+5</div>
         </div>
       </div>
-
-      <div class="score-card">
-        <div class="card-info">
-          <h3>Richmond Country Club</h3>
-          <div class="card-meta">
-            <span>Aug 28, 2026</span>
-            <span>•</span>
-            <span>18 Holes</span>
-          </div>
-        </div>
-        <div class="card-scores">
-          <div class="total-score">84</div>
-          <div class="to-par">+12</div>
-        </div>
-      </div>
     </div>
-
   </main>
 
-  <script>
-    // Fetch live scores committed by GitHub Actions
-    async function loadPersonalScores() {
-      try {
-        const response = await fetch('./data/player_stats.json');
-        if (!response.ok) return;
-        const data = await response.json();
+  <!-- Upload Modal -->
+  <div class="modal-backdrop" id="upload-modal">
+    <div class="modal-box">
+      <h2>Add New Scorecard</h2>
+      
+      <div class="form-group">
+        <label>Select Scorecard Photo</label>
+        <input type="file" id="scorecard-file" accept="image/*" capture="environment" />
+      </div>
 
-        // Populate summary bar
+      <div class="form-group">
+        <label>Course Name (Optional)</label>
+        <input type="text" id="course-override" placeholder="Leave blank to auto-detect" />
+      </div>
+
+      <div class="form-group" id="token-group">
+        <label>GitHub Personal Access Token (Saved locally)</label>
+        <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx" />
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeUploadModal()">Cancel</button>
+        <button class="btn-submit" id="btn-upload" onclick="uploadScorecard()">Upload & Process</button>
+      </div>
+      <p id="upload-status" style="margin-top: 0.75rem; font-size: 0.8rem; font-weight: 600; text-align: center;"></p>
+    </div>
+  </div>
+
+  <script>
+    const REPO_OWNER = 'jgreco77';
+    const REPO_NAME = 'golf-tracker';
+
+    function openUploadModal() {
+      const savedToken = localStorage.getItem('gh_pat');
+      if (savedToken) {
+        document.getElementById('gh-token').value = savedToken;
+      }
+      document.getElementById('upload-modal').style.display = 'flex';
+    }
+
+    function closeUploadModal() {
+      document.getElementById('upload-modal').style.display = 'none';
+      document.getElementById('upload-status').textContent = '';
+    }
+
+    async function uploadScorecard() {
+      const fileInput = document.getElementById('scorecard-file');
+      const tokenInput = document.getElementById('gh-token').value.trim();
+      const courseOverride = document.getElementById('course-override').value.trim();
+      const status = document.getElementById('upload-status');
+      const submitBtn = document.getElementById('btn-upload');
+
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Please choose or snap a scorecard photo.');
+        return;
+      }
+      if (!tokenInput) {
+        alert('Please enter your GitHub Personal Access Token.');
+        return;
+      }
+
+      localStorage.setItem('gh_pat', tokenInput);
+
+      const file = fileInput.files[0];
+      status.style.color = '#1b4332';
+      status.textContent = 'Reading photo...';
+      submitBtn.disabled = true;
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          status.textContent = 'Uploading to GitHub...';
+          const base64Content = e.target.result.split(',')[1];
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          const filePath = `images/scorecard-${timestamp}.jpg`;
+
+          // 1. Commit the raw image to images/
+          const uploadRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${filePath}`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${tokenInput}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: `Upload scorecard ${timestamp}`,
+              content: base64Content
+            })
+          });
+
+          if (!uploadRes.ok) {
+            throw new Error(`Upload failed (${uploadRes.status}): ${await uploadRes.text()}`);
+          }
+
+          status.textContent = 'Triggering parser workflow...';
+
+          // 2. Trigger the processing workflow directly via repository dispatch
+          const dispatchRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/dispatches`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${tokenInput}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              event_type: 'process-scorecard',
+              client_payload: {
+                image_path: filePath,
+                course_override: courseOverride
+              }
+            })
+          });
+
+          status.style.color = '#ff7700';
+          status.textContent = 'Scorecard uploaded! Processing started in GitHub Actions.';
+          setTimeout(() => {
+            closeUploadModal();
+            submitBtn.disabled = false;
+          }, 2500);
+
+        } catch (err) {
+          status.style.color = '#dc2626';
+          status.textContent = err.message;
+          submitBtn.disabled = false;
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function loadScores() {
+      try {
+        const res = await fetch('./data/player_stats.json');
+        if (!res.ok) return;
+        const data = await res.json();
         document.getElementById('stat-rounds').textContent = data.total_rounds || '0';
         document.getElementById('stat-avg').textContent = data.scoring_average || '--';
         document.getElementById('stat-low').textContent = data.lowest_round || '--';
 
-        // Render cards
         if (data.rounds && data.rounds.length > 0) {
           const list = document.getElementById('rounds-list');
           list.innerHTML = '';
@@ -316,13 +453,9 @@
             card.innerHTML = `
               <div class="card-info">
                 <h3>${r.course_name}</h3>
-                <div class="card-meta">
-                  <span>${r.date}</span>
-                  <span>•</span>
-                  <span>${r.holes_played} Holes</span>
-                </div>
+                <div class="card-meta">${r.date} • ${r.holes_played} Holes</div>
               </div>
-              <div class="card-scores">
+              <div>
                 <div class="total-score">${r.score}</div>
                 <div class="to-par">${r.to_par >= 0 ? '+' + r.to_par : r.to_par}</div>
               </div>
@@ -330,13 +463,10 @@
             list.appendChild(card);
           });
         }
-      } catch (err) {
-        console.log('Using placeholder rounds until JSON is populated:', err);
-      }
+      } catch (err) {}
     }
 
-    loadPersonalScores();
+    loadScores();
   </script>
 </body>
 </html>
-
