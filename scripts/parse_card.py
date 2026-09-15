@@ -67,7 +67,7 @@ if api_key and image_path and os.path.exists(image_path):
         """
 
         response = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-1.5-flash',
             contents=[
                 types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"),
                 prompt
