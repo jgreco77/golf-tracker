@@ -1,7 +1,7 @@
 {
-  "total_rounds": 2,
-  "scoring_average": "40.5",
-  "lowest_round": "0",
+  "total_rounds": 1,
+  "scoring_average": "81.0",
+  "lowest_round": "81",
   "rounds": [
     {
       "course_name": "HARBOR LIGHTS GOLF CLUB",
@@ -104,17 +104,6 @@
           "score": 4
         }
       ]
-    },
-    {
-      "course_name": "Golf Course",
-      "location": "",
-      "date": "Sep 15, 2026",
-      "holes_played": 0,
-      "score": 0,
-      "to_par": 0,
-      "total_putts": "N/A",
-      "image_url": "./images/scorecard-2026-09-15T13-11-57-244Z.jpg",
-      "holes": []
     }
   ]
 }
