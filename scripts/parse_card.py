@@ -2,21 +2,24 @@ import os
 import json
 import datetime
 from PIL import Image
-from PIL.ExifTags import TAGS, GPSTAGS
-from rapidfuzz import process, fuzz
+from google import genai
+from google.genai import types
 
 image_path = os.getenv("IMAGE_PATH")
 course_override = os.getenv("COURSE_OVERRIDE")
+api_key = os.getenv("GEMINI_API_KEY")
 
 stats_path = "data/player_stats.json"
 config_path = "config.json"
 
-# Load config
-target_aliases = ["John", "Greco", "JG"]
+# Target name aliases
+target_player = "John"
+aliases = ["John", "Greco", "JG", "Johnny"]
 if os.path.exists(config_path):
     with open(config_path, "r") as f:
         cfg = json.load(f)
-        target_aliases = cfg.get("aliases", target_aliases)
+        target_player = cfg.get("target_player", target_player)
+        aliases = cfg.get("aliases", aliases)
 
 # Load existing stats
 if os.path.exists(stats_path):
@@ -25,60 +28,71 @@ if os.path.exists(stats_path):
 else:
     stats = {"total_rounds": 0, "scoring_average": "--", "lowest_round": "--", "rounds": []}
 
-# Default round placeholder values if OCR needs fallback
-round_date = datetime.date.today().strftime("%b %d, %Y")
-course_name = course_override if course_override else "Harbor Lights Golf Club"
-location = "Warwick, RI"
+extracted_data = None
 
-# Inspect EXIF metadata for timestamp if available
-if image_path and os.path.exists(image_path):
+if api_key and image_path and os.path.exists(image_path):
     try:
-        img = Image.open(image_path)
-        exif = img._getexif()
-        if exif:
-            for tag_id, val in exif.items():
-                tag = TAGS.get(tag_id, tag_id)
-                if tag == "DateTimeOriginal":
-                    dt = datetime.datetime.strptime(val, "%Y:%m:%d %H:%M:%S")
-                    round_date = dt.strftime("%b %d, %Y")
+        client = genai.Client(api_key=api_key)
+        pil_img = Image.open(image_path)
+
+        prompt = f"""
+        Analyze this golf scorecard.
+        Identify the row for the player matching one of these aliases: {aliases}.
+        Extract:
+        1. "course_name": The name of the golf course printed on the card.
+        2. "location": City and State if visible.
+        3. "date": Date played (format: "MMM DD, YYYY"). If year isn't visible, assume 2026.
+        4. "holes": A list of objects for holes played: [{{"hole": 1, "par": int, "score": int}}].
+        5. "total_putts": Total putts if tracked, else null.
+
+        Return ONLY a raw JSON object with these keys. Do not wrap in markdown or backticks.
+        """
+
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=[pil_img, prompt]
+        )
+
+        clean_text = response.text.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+        extracted_data = json.loads(clean_text)
     except Exception as e:
-        print(f"EXIF parsing skipped: {e}")
+        print(f"Error extracting scorecard with vision API: {e}")
 
-# Build hole data structure
-# Note: Connect an OCR/Vision API key here for full handwriting extraction
-holes = [
-    {"par": 4, "score": 5},
-    {"par": 3, "score": 3},
-    {"par": 4, "score": 4},
-    {"par": 4, "score": 4},
-    {"par": 5, "score": 5},
-    {"par": 3, "score": 4},
-    {"par": 4, "score": 5},
-    {"par": 4, "score": 4},
-    {"par": 5, "score": 5}
-]
+# Fallback defaults if extraction fails
+if not extracted_data:
+    extracted_data = {
+        "course_name": course_override or "Unknown Course",
+        "location": "Local",
+        "date": datetime.date.today().strftime("%b %d, %Y"),
+        "holes": [{"par": 4, "score": 4}],
+        "total_putts": None
+    }
 
-total_score = sum(h["score"] for h in holes)
-total_par = sum(h["par"] for h in holes)
+if course_override:
+    extracted_data["course_name"] = course_override
+
+holes = extracted_data.get("holes", [])
+total_score = sum(int(h.get("score", 0)) for h in holes if str(h.get("score", "")).isdigit())
+total_par = sum(int(h.get("par", 0)) for h in holes if str(h.get("par", "")).isdigit())
 to_par = total_score - total_par
 
 new_round = {
-    "course_name": course_name,
-    "location": location,
-    "date": round_date,
+    "course_name": extracted_data.get("course_name", "Golf Course"),
+    "location": extracted_data.get("location", ""),
+    "date": extracted_data.get("date", datetime.date.today().strftime("%b %d, %Y")),
     "holes_played": len(holes),
     "score": total_score,
     "to_par": to_par,
-    "total_putts": 16,
-    "image_url": f"https://raw.githubusercontent.com/jgreco77/golf-tracker/main/{image_path}" if image_path else "",
+    "total_putts": extracted_data.get("total_putts") or "N/A",
+    "image_url": f"[https://raw.githubusercontent.com/jgreco77/golf-tracker/main/](https://raw.githubusercontent.com/jgreco77/golf-tracker/main/){image_path}" if image_path else "",
     "holes": holes
 }
 
-# Prepend new round to history
+# Prepend the new round to stats
 stats["rounds"].insert(0, new_round)
 stats["total_rounds"] = len(stats["rounds"])
 
-all_scores = [r["score"] for r in stats["rounds"] if "score" in r]
+all_scores = [r["score"] for r in stats["rounds"] if "score" in r and isinstance(r["score"], (int, float))]
 if all_scores:
     stats["scoring_average"] = f"{sum(all_scores) / len(all_scores):.1f}"
     stats["lowest_round"] = str(min(all_scores))
@@ -86,4 +100,4 @@ if all_scores:
 with open(stats_path, "w") as f:
     json.dump(stats, f, indent=2)
 
-print(f"Successfully processed round for {course_name}: Score {total_score}")
+print(f"Recorded unique round for {new_round['course_name']}: {new_round['score']} ({new_round['to_par']})")
