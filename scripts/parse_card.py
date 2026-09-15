@@ -78,7 +78,6 @@ if api_key and image_path and os.path.exists(image_path):
                     ]
                 )
                 raw_text = response.text.strip()
-                print(f"Model output received from {model_name}")
 
                 clean_text = re.sub(r"^```json\s*", "", raw_text, flags=re.IGNORECASE)
                 clean_text = re.sub(r"^```\s*", "", clean_text)
@@ -140,17 +139,29 @@ new_round = {
     "holes": clean_holes
 }
 
-stats["rounds"].insert(0, new_round)
+# De-duplication check: if this round (same image or same date/course) already exists, update it instead of inserting a duplicate
+existing_index = None
+for idx, r in enumerate(stats.get("rounds", [])):
+    if (img_url and r.get("image_url") == img_url) or (r.get("date") == new_round["date"] and r.get("course_name") == new_round["course_name"]):
+        existing_index = idx
+        break
+
+if existing_index is not None:
+    print(f"Updating existing round at index {existing_index} instead of duplicating.")
+    stats["rounds"][existing_index] = new_round
+else:
+    stats["rounds"].insert(0, new_round)
+
 stats["total_rounds"] = len(stats["rounds"])
 
-# Normalize all rounds to an 18-hole scoring pace
+# Calculate 18-hole normalized average for the summary bar ONLY
 normalized_scores = []
 for r in stats["rounds"]:
-    score = r.get("score")
-    holes = r.get("holes_played", len(r.get("holes", [])))
-    if isinstance(score, (int, float)) and score > 0 and holes > 0:
-        pace_18 = (score / holes) * 18
-        normalized_scores.append(pace_18)
+    s = r.get("score", 0)
+    h = r.get("holes_played", len(r.get("holes", [])))
+    if isinstance(s, (int, float)) and s > 0 and h > 0:
+        # Scale 9-hole score to 18-hole pace: (41 / 9) * 18 = 82.0
+        normalized_scores.append((s / h) * 18)
 
 if normalized_scores:
     stats["scoring_average"] = f"{sum(normalized_scores) / len(normalized_scores):.1f}"
@@ -160,4 +171,4 @@ if normalized_scores:
 with open(stats_path, "w") as f:
     json.dump(stats, f, indent=2)
 
-print(f"Processed: {new_round['course_name']} | Score: {new_round['score']} | Holes: {len(clean_holes)}")
+print(f"Finished: Total Rounds={stats['total_rounds']} | 18H Avg={stats.get('scoring_average')}")
