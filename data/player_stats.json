@@ -1,8 +1,65 @@
 {
-  "total_rounds": 1,
-  "scoring_average": "81.0",
-  "lowest_round": "81",
+  "total_rounds": 2,
+  "scoring_average": "61.0",
+  "lowest_round": "41",
   "rounds": [
+    {
+      "course_name": "Harbor Lights Golf Club",
+      "location": "Warwick, RI",
+      "date": "Oct 12, 2023",
+      "holes_played": 9,
+      "score": 41,
+      "to_par": 5,
+      "total_putts": "N/A",
+      "image_url": "./images/scorecard-2026-09-15T13-38-27-838Z.jpg",
+      "holes": [
+        {
+          "hole": 1,
+          "par": 4,
+          "score": 5
+        },
+        {
+          "hole": 2,
+          "par": 3,
+          "score": 3
+        },
+        {
+          "hole": 3,
+          "par": 5,
+          "score": 6
+        },
+        {
+          "hole": 4,
+          "par": 4,
+          "score": 5
+        },
+        {
+          "hole": 5,
+          "par": 4,
+          "score": 4
+        },
+        {
+          "hole": 6,
+          "par": 3,
+          "score": 4
+        },
+        {
+          "hole": 7,
+          "par": 4,
+          "score": 5
+        },
+        {
+          "hole": 8,
+          "par": 5,
+          "score": 5
+        },
+        {
+          "hole": 9,
+          "par": 4,
+          "score": 4
+        }
+      ]
+    },
     {
       "course_name": "HARBOR LIGHTS GOLF CLUB",
       "location": "Warwick, RI",
