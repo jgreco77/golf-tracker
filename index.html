@@ -28,7 +28,7 @@
     body {
       min-height: 100vh;
       background-color: var(--irish-green);
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800' opacity='0.08'%3E%3Cg stroke='%23ffffff' stroke-width='16' stroke-linecap='round' stroke-linejoin='round' fill='none'%3E%3Cline x1='150' y1='150' x2='650' y2='650'/%3E%3Cpath d='M650 650 L685 640 L705 670 L660 685 Z' fill='%23ffffff'/%3E%3Cline x1='650' y1='150' x2='150' y2='650'/%3E%3Cpath d='M150 650 L115 640 L95 670 L140 685 Z' fill='%23ffffff'/%3E%3C/g%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)' viewBox='0 0 800 800' opacity='0.08'%3E%3Cg stroke='%23ffffff' stroke-width='16' stroke-linecap='round' stroke-linejoin='round' fill='none'%3E%3Cline x1='150' y1='150' x2='650' y2='650'/%3E%3Cpath d='M650 650 L685 640 L705 670 L660 685 Z' fill='%23ffffff'/%3E%3Cline x1='650' y1='150' x2='150' y2='650'/%3E%3Cpath d='M150 650 L115 640 L95 670 L140 685 Z' fill='%23ffffff'/%3E%3C/g%3E%3C/svg%3E");
       background-position: center;
       background-repeat: no-repeat;
       background-size: min(700px, 90vw);
@@ -118,7 +118,6 @@
       position: relative;
     }
 
-    /* Pull-to-refresh indicator */
     #ptr-indicator {
       text-align: center;
       font-size: 0.8rem;
@@ -378,7 +377,7 @@
         <div class="stat-value" id="stat-rounds">0</div>
       </div>
       <div>
-        <div class="stat-label">Scoring Avg</div>
+        <div class="stat-label">18H Avg</div>
         <div class="stat-value highlight" id="stat-avg">--</div>
       </div>
       <div>
@@ -570,23 +569,34 @@
 
       try {
         const updatedRounds = loadedRounds.filter((_, idx) => idx !== activeRoundIndex);
-        const allScores = updatedRounds.map(r => r.score);
+
+        // Normalize scores to 18-hole pace upon deletion
+        const normalizedScores = [];
+        updatedRounds.forEach(r => {
+          const score = r.score;
+          const holes = r.holes_played || (r.holes ? r.holes.length : 0);
+          if (score > 0 && holes > 0) {
+            normalizedScores.append ? null : normalizedScores.push((score / holes) * 18);
+          }
+        });
+
+        const rawScores = updatedRounds.map(r => r.score).filter(s => s > 0);
 
         const newStats = {
           total_rounds: updatedRounds.length,
-          scoring_average: allScores.length > 0 ? (allScores.reduce((a, b) => a + b, 0) / allScores.length).toFixed(1) : '--',
-          lowest_round: allScores.length > 0 ? String(Math.min(...allScores)) : '--',
+          scoring_average: normalizedScores.length > 0 ? (normalizedScores.reduce((a, b) => a + b, 0) / normalizedScores.length).toFixed(1) : '--',
+          lowest_round: rawScores.length > 0 ? String(Math.min(...rawScores)) : '--',
           rounds: updatedRounds
         };
 
-        const checkRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/data/player_stats.json`, {
+        const checkRes = await fetch(`[https://api.github.com/repos/$](https://api.github.com/repos/$){REPO_OWNER}/${REPO_NAME}/contents/data/player_stats.json`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const checkData = await checkRes.json();
         statsFileSha = checkData.sha;
 
         const updatedContentBase64 = utf8ToBase64(JSON.stringify(newStats, null, 2));
-        const commitRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/data/player_stats.json`, {
+        const commitRes = await fetch(`[https://api.github.com/repos/$](https://api.github.com/repos/$){REPO_OWNER}/${REPO_NAME}/contents/data/player_stats.json`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -644,7 +654,6 @@
       });
     }
 
-    // Auto-polling: checks every 4 seconds until the new round appears
     function startAutoPolling(initialCount) {
       if (pollingInterval) clearInterval(pollingInterval);
       let attempts = 0;
@@ -656,7 +665,7 @@
           clearInterval(pollingInterval);
           pollingInterval = null;
         }
-      }, 4000);
+       }, 4000);
     }
 
     async function uploadScorecard() {
@@ -665,7 +674,8 @@
       const courseOverride = document.getElementById('course-override').value.trim();
       const status = document.getElementById('upload-status');
       const submitBtn = document.getElementById('btn-upload');
-if (!fileInput.files || fileInput.files.length === 0) {
+
+      if (!fileInput.files || fileInput.files.length === 0) {
         alert('Please choose or snap a scorecard photo.');
         return;
       }
@@ -688,7 +698,7 @@ if (!fileInput.files || fileInput.files.length === 0) {
 
         status.textContent = 'Uploading to GitHub...';
 
-        const uploadRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${filePath}`, {
+        const uploadRes = await fetch(`[https://api.github.com/repos/$](https://api.github.com/repos/$){REPO_OWNER}/${REPO_NAME}/contents/${filePath}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${tokenInput}`,
@@ -707,7 +717,7 @@ if (!fileInput.files || fileInput.files.length === 0) {
 
         status.textContent = 'Triggering parser...';
 
-        await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/dispatches`, {
+        await fetch(`[https://api.github.com/repos/$](https://api.github.com/repos/$){REPO_OWNER}/${REPO_NAME}/dispatches`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${tokenInput}`,
@@ -789,7 +799,6 @@ if (!fileInput.files || fileInput.files.length === 0) {
       }
     }
 
-    // Pull-to-refresh touch listener
     function setupPullToRefresh() {
       const container = document.getElementById('rounds-list');
       const indicator = document.getElementById('ptr-indicator');
@@ -838,4 +847,3 @@ if (!fileInput.files || fileInput.files.length === 0) {
   </script>
 </body>
 </html>
-     
