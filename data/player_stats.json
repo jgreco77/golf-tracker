@@ -1,18 +1,6 @@
 {
-  "total_rounds": 1,
-  "scoring_average": "0.0",
-  "lowest_round": "0",
-  "rounds": [
-    {
-      "course_name": "Golf Course",
-      "location": "",
-      "date": "Sep 15, 2026",
-      "holes_played": 0,
-      "score": 0,
-      "to_par": 0,
-      "total_putts": "N/A",
-      "image_url": "./images/scorecard-2026-09-15T12-38-52-138Z.jpg",
-      "holes": []
-    }
-  ]
+  "total_rounds": 0,
+  "scoring_average": "--",
+  "lowest_round": "--",
+  "rounds": []
 }
