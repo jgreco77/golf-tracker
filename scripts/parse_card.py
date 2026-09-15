@@ -63,7 +63,6 @@ if api_key and image_path and os.path.exists(image_path):
     Return ONLY a single valid JSON object. No Markdown code blocks, no backticks.
     """
 
-    # Primary model and automatic fallbacks if one gets slammed
     candidate_models = ['gemini-3.6-flash', 'gemini-3.6-pro']
 
     for model_name in candidate_models:
@@ -91,7 +90,7 @@ if api_key and image_path and os.path.exists(image_path):
             except Exception as e:
                 print(f"Error on {model_name} (attempt {attempt}): {e}")
                 if "503" in str(e) or "UNAVAILABLE" in str(e):
-                    time.sleep(3 * attempt)  # Wait 3s, then 6s before retry
+                    time.sleep(3 * attempt)
                 else:
                     break
 
@@ -144,10 +143,19 @@ new_round = {
 stats["rounds"].insert(0, new_round)
 stats["total_rounds"] = len(stats["rounds"])
 
-all_scores = [r["score"] for r in stats["rounds"] if isinstance(r.get("score"), (int, float)) and r["score"] > 0]
-if all_scores:
-    stats["scoring_average"] = f"{sum(all_scores) / len(all_scores):.1f}"
-    stats["lowest_round"] = str(min(all_scores))
+# Normalize all rounds to an 18-hole scoring pace
+normalized_scores = []
+for r in stats["rounds"]:
+    score = r.get("score")
+    holes = r.get("holes_played", len(r.get("holes", [])))
+    if isinstance(score, (int, float)) and score > 0 and holes > 0:
+        pace_18 = (score / holes) * 18
+        normalized_scores.append(pace_18)
+
+if normalized_scores:
+    stats["scoring_average"] = f"{sum(normalized_scores) / len(normalized_scores):.1f}"
+    valid_scores = [r["score"] for r in stats["rounds"] if isinstance(r.get("score"), (int, float)) and r["score"] > 0]
+    stats["lowest_round"] = str(min(valid_scores)) if valid_scores else "--"
 
 with open(stats_path, "w") as f:
     json.dump(stats, f, indent=2)
