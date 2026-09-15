@@ -23,12 +23,13 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install Pillow requests rapidfuzz pytesseract
+          pip install Pillow requests google-genai
 
       - name: Run Scorecard Parser
         env:
           IMAGE_PATH: ${{ github.event.client_payload.image_path }}
           COURSE_OVERRIDE: ${{ github.event.client_payload.course_override }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python scripts/parse_card.py
 
@@ -38,9 +39,9 @@ jobs:
           git config --global user.email "bot@golftracker.local"
           git add data/player_stats.json
           if git diff --staged --quiet; then
-            echo "No score changes to commit."
+            echo "No changes to commit."
           else
-            git commit -m "Add new round to player stats [skip ci]"
+            git commit -m "Parse scorecard data [skip ci]"
             git push
           fi
           
