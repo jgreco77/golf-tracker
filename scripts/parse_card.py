@@ -35,19 +35,32 @@ if api_key and image_path and os.path.exists(image_path):
         client = genai.Client(api_key=api_key)
         pil_img = Image.open(image_path)
 
-        prompt = f"""
-        Analyze this golf scorecard.
-        Identify the row for the player matching one of these aliases: {aliases}.
-        Extract:
-        1. "course_name": The name of the golf course printed on the card.
-        2. "location": City and State if visible.
-        3. "date": Date played (format: "MMM DD, YYYY"). If year isn't visible, assume 2026.
-        4. "holes": A list of objects for holes played: [{{"hole": 1, "par": int, "score": int}}].
-        5. "total_putts": Total putts if tracked, else null.
+                prompt = f"""
+        You are an expert golf scorecard reader. 
+        Analyze the full image grid. Find the player row matching one of these names/initials: {aliases}.
 
-        Return ONLY a raw JSON object with these keys. Do not wrap in markdown or backticks.
+        Extract these fields:
+        1. "course_name": Full golf course name printed on the card.
+        2. "location": City and State if printed.
+        3. "date": Date played (format "MMM DD, YYYY"). Default to current date if missing.
+        4. "holes": An array containing EVERY SINGLE hole played on the card (all 9 holes for a 9-hole round, or all 18 holes for an 18-hole round). 
+           Do NOT stop after hole 1. Iterate through column 1 through 9 (and 10 through 18 if played).
+           Each item must be: {{"hole": <int 1-18>, "par": <int>, "score": <int>}}
+        5. "total_putts": Total putts integer if tracked in a row, otherwise null.
+
+        CRITICAL: Ensure the "holes" list contains entries for every hole with a recorded score on the player's line.
+        Return ONLY valid, raw JSON matching this structure without markdown fences:
+        {{
+          "course_name": "...",
+          "location": "...",
+          "date": "...",
+          "holes": [
+            {{"hole": 1, "par": 4, "score": 5}},
+            {{"hole": 2, "par": 3, "score": 4}}
+          ],
+          "total_putts": null
+        }}
         """
-
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=[pil_img, prompt]
