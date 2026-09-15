@@ -1,6 +1,23 @@
 {
-  "total_rounds": 0,
-  "scoring_average": "--",
-  "lowest_round": "--",
-  "rounds": []
+  "total_rounds": 1,
+  "scoring_average": "4.0",
+  "lowest_round": "4",
+  "rounds": [
+    {
+      "course_name": "Unknown Course",
+      "location": "Local",
+      "date": "Sep 15, 2026",
+      "holes_played": 1,
+      "score": 4,
+      "to_par": 0,
+      "total_putts": "N/A",
+      "image_url": "[https://raw.githubusercontent.com/jgreco77/golf-tracker/main/](https://raw.githubusercontent.com/jgreco77/golf-tracker/main/)images/scorecard-2026-09-15T12-07-09-449Z.jpg",
+      "holes": [
+        {
+          "par": 4,
+          "score": 4
+        }
+      ]
+    }
+  ]
 }
